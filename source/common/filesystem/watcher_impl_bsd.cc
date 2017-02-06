@@ -7,6 +7,8 @@
 #include "common/common/assert.h"
 #include "common/common/utility.h"
 
+#include "event2/event.h"
+
 #include <fcntl.h>
 #include <sys/types.h>
 #include <sys/event.h>
@@ -33,16 +35,18 @@ WatcherImpl::~WatcherImpl() {
 void WatcherImpl::addWatch(const std::string& path, uint32_t events, Watcher::OnChangedCb cb) {
   int watch_fd = open(path.c_str(), O_RDONLY);
   if (watch_fd == -1) {
-   throw EnvoyException(fmt::format("invalid watch path {}", path));
+    throw EnvoyException(fmt::format("invalid watch path {}", path));
   }
 
   FileWatchPtr watch(new FileWatch());
   watch->fd_ = watch_fd;
   watch->file_ = path;
+  watch->events_ = events;
   watch->callback_ = cb;
 
   struct kevent event;
-  EV_SET(&event, watch_fd, EVFILT_VNODE, EV_ADD | EV_CLEAR, events, 0, watch.get());
+  EV_SET(&event, watch_fd, EVFILT_VNODE, EV_ADD | EV_CLEAR, NOTE_WRITE | NOTE_DELETE | NOTE_RENAME,
+         0, watch.get());
 
   if (kevent(queue_, &event, 1, NULL, 0, NULL) == -1) {
     throw EnvoyException(
