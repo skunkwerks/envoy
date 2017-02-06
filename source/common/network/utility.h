@@ -7,8 +7,8 @@
 #include "common/network/addr_info.h"
 
 #include <sys/un.h>
+#include <netinet/in.h>
 
-#include <linux/netfilter_ipv4.h>
 
 namespace Network {
 

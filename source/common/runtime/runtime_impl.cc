@@ -10,27 +10,39 @@
 #include <fcntl.h>
 #include <unistd.h>
 
+#if defined(LINUX)
+#include <uuid/uuid.h>
+#elif defined(__FreeBSD__)
+#include <sys/types.h>
+#include <uuid.h>
+#endif
+
 namespace Runtime {
 
 const size_t RandomGeneratorImpl::UUID_LENGTH = 36;
 
 std::string RandomGeneratorImpl::uuid() {
-  int fd = open("/proc/sys/kernel/random/uuid", O_RDONLY);
-  if (-1 == fd) {
-    throw EnvoyException(fmt::format("unable to open uuid, errno: {}", strerror(errno)));
+  char *generated_uuid = nullptr;
+  uint32_t status = 0;
+  uuid_t uuid;
+
+#if defined(LINUX)
+  generated_uuid = malloc(sizeof(char) * UUID_LENGTH);
+  uuid_generate_random(uuid);
+  uuid_unparse(uuid, generated_uuid);
+  free(generated_uuid);
+#elif defined(__FreeBSD__)
+  uuid_create(&uuid, &status);
+  uuid_to_string(&uuid, &generated_uuid, &status);
+  free(generated_uuid);
+#endif
+
+  std::string string_uuid = std::string(generated_uuid);
+  if (0 != status) {
+    throw EnvoyException(fmt::format("unable to generate uuid, status: {}", status));
   }
 
-  char generated_uuid[UUID_LENGTH + 1];
-  ssize_t bytes_read = read(fd, generated_uuid, UUID_LENGTH);
-  close(fd);
-  generated_uuid[UUID_LENGTH] = '\0';
-
-  if (bytes_read != UUID_LENGTH) {
-    throw EnvoyException(fmt::format("cannot read the uuid: bytes read - {}, bytes expected - {}",
-                                     bytes_read, UUID_LENGTH));
-  }
-
-  return std::string(generated_uuid);
+  return string_uuid;
 }
 
 SnapshotImpl::SnapshotImpl(const std::string& root_path, const std::string& override_path,

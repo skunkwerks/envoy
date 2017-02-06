@@ -7,7 +7,11 @@ include(thirdparty.cmake)
 
 # Setup build ID via the linker. Also, statically link GCC libraries to lock GCC version.
 execute_process(COMMAND git -C ${CMAKE_SOURCE_DIR} rev-parse --sq HEAD OUTPUT_VARIABLE GIT_COMMIT WORKING_DIRECTORY ${PROJECT_SOURCE_DIR})
-set(CMAKE_EXE_LINKER_FLAGS "-Wl,--build-id=0x${GIT_COMMIT} -static-libstdc++ -static-libgcc ${ENVOY_EXE_EXTRA_LINKER_FLAGS} ${CMAKE_EXE_LINKER_FLAGS}")
+set(CMAKE_EXE_LINKER_FLAGS "-Wl,--build-id=0x${GIT_COMMIT} ${ENVOY_EXE_EXTRA_LINKER_FLAGS} ${CMAKE_EXE_LINKER_FLAGS}")
+
+if (NOT CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+  set(CMAKE_EXE_LINKER_FLAGS "-static-libstdc++ -static-libgcc ${CMAKE_EXEC_LINKER_FLAGS}")
+endif ()
 
 include_directories(${PROJECT_SOURCE_DIR}/include)
 include_directories(${PROJECT_BINARY_DIR}/source)

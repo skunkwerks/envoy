@@ -229,7 +229,11 @@ bool Utility::isLoopbackAddress(const char* address) {
 
 bool Utility::getOriginalDst(int fd, sockaddr_storage* orig_addr) {
   socklen_t addr_len = sizeof(sockaddr_storage);
+#ifdef SOL_IP
   int status = getsockopt(fd, SOL_IP, SO_ORIGINAL_DST, orig_addr, &addr_len);
+#else
+  int status = getsockname(fd, reinterpret_cast<sockaddr *>(orig_addr), &addr_len);
+#endif
 
   return (status == 0);
 }

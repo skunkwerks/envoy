@@ -1,7 +1,11 @@
 #include "assert.h"
 #include "thread.h"
 
+#ifdef linux
 #include <sys/syscall.h>
+#elif defined(__FreeBSD__)
+#include <sys/thr.h>
+#endif
 
 namespace Thread {
 
@@ -14,7 +18,19 @@ Thread::Thread(std::function<void()> thread_routine) : thread_routine_(thread_ro
   UNREFERENCED_PARAMETER(rc);
 }
 
-int32_t Thread::currentThreadId() { return syscall(SYS_gettid); }
+int32_t Thread::currentThreadId() {
+#ifdef linux
+  return syscall(SYS_gettid);
+#elif defined(__APPLE__)
+  ret = mach_thread_self();
+  mach_port_deallocate(mach_task_self(), ret);
+  return ret;
+#elif defined(__FreeBSD__)
+  long lwpid;
+  thr_self(&lwpid);
+  return lwpid;
+#endif
+}
 
 void Thread::join() {
   int rc = pthread_join(thread_id_, nullptr);
