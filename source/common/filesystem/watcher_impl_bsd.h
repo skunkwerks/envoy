@@ -1,9 +1,10 @@
 #pragma once
 
-#include "common/common/linked_object.h"
-
 #include "envoy/event/dispatcher.h"
 #include "envoy/filesystem/filesystem.h"
+
+#include "common/common/linked_object.h"
+#include "common/common/logger.h"
 
 namespace Filesystem {
 

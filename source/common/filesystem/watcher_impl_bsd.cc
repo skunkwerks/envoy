@@ -5,7 +5,6 @@
 #include "envoy/event/file_event.h"
 
 #include "common/common/assert.h"
-#include "common/common/logger.h"
 #include "common/common/utility.h"
 
 #include <fcntl.h>
@@ -55,7 +54,7 @@ void WatcherImpl::addWatch(const std::string& path, uint32_t events, Watcher::On
         fmt::format("unable to add filesystem watch for file {}: {}", path, strerror(event.data)));
   }
 
-  log_debug("added watch for file: '{}' fd: {}", path, watch_fd);
+  //log_debug("added watch for file: '{}' fd: {}", path, watch_fd);
   watch->moveIntoList(std::move(watch), watches_);
 }
 
@@ -74,11 +73,11 @@ void WatcherImpl::onKqueueEvent() {
   }
 
   if (file->events_ & event.fflags) {
-    log_debug("matched callback: file: {}", file->file_);
+    //log_debug("matched callback: file: {}", file->file_);
     file->callback_(events);
   }
 
-  log_debug("notification: fd: {} flags: {:x} file: {}", file->fd_, event.fflags, file->file_);
+  //log_debug("notification: fd: {} flags: {:x} file: {}", file->fd_, event.fflags, file->file_);
 
   if (event.fflags & NOTE_DELETE) {
     close(file->fd_);
